@@ -1,0 +1,4 @@
+# Ignore files
+*.log
+fix_classifier_model_old_version.sh
+hcp_functional_CMH_model.sh
