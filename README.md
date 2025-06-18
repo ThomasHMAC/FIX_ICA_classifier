@@ -2,58 +2,88 @@
 
 This module is designed to train a classifier for Independent Component Analysis (ICA) component classification using FSL's FIX tool. It includes utilities to train new FIX models on HCP-style datasets and visualize model performance.
 
-## Requirements
+---
+
+## Quick Start
 
 ### Software Dependencies
 - [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIX) with FIX tool
 
 ### Python Dependencies
-- Python 3.x
+- **Python 3.x** with the following packages:
 - `matplotlib`
 - `pandas`
 - `numpy`
 
-### Required Directory Layout
+### Required Directory Structure
 
 ```
 /projects/ttan/BEEST_hcp/SPN20/
 ├── ica_correct/
 │   ├── outputs_label/
-│   │   ├── CMH0001_BOLD_1_PA.txt
-│   │   ├── CMH0014_BOLD_2_PA.txt
-│   │   └── ...
+│   │   ├── CMH0001_BOLD_1_PA.txt       # Hand-labeled ICA components
+│   │   ├── CMH0014_BOLD_2_PA.txt       # Hand-labeled ICA components
+│   │   └── ...                         # Additional hand-labeled files
 ├── ica_dir/
 └── sessions/
 ```
 
 ### Hand-Labeled ICA Components
 
-These hand-labeled ICA component files can be created using our interactive ICA labeling app, available [here](https://your-link-here.com). The app allows users to visually inspect ICA components and mark those classified as **noise**.
+Hand-labeled ICA component files can be created using **our interactive ICA labelling app** [available [here](https://github.com/slimnsour/ica-ranker)].
+
+The app allows you to:
+- Visually inspect ICA components
+- Mark components classified as **noise**
+- Export properly formatted label files
+
+---
 
 ## Usage
 
-### 1. Train the Classifier
-
-To train a classifier using FIX and a labeled ICA dataset, run:
+### Step 1. Train Classifier
 
 ```bash
-bash fix_classifier_model.sh [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_OUTPUT_DIR] [QX_CONTAINER]
+bash fix_classifier_model.sh [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_OUTPUT_DIR] [STUDIES_ID] [QX_CONTAINER]
 ```
-
+### Example:
+```bash
+bash fix_classifier_model.sh / 
+    /projects/ttan/BEEST_hcp /
+    /projects/ttan/BEEST_hcp/selected_participants.txt /
+    /projects/ttan/BEEST_hcp/CMH_model /
+    'SPN20, SPN40'
+```
 **Parameters:**
 - `ROOT_DIR`: Root directory containing your HCP-style study data
 - `PARTICIPANT_FILE`: Text file containing participant for training
 - `MODEL_OUTPUT_DIR`: Directory where the trained model will be saved
+- `STUDIES_ID`: Comma-separated list of studies or a single study
 - `QX_CONTAINER`: Container specification for the execution environment
 
 Use ```fix_classifier_model.sh --help``` for more detail
 
-### 2. Visualize Model Performance
+---
 
-After training, use the Python script to visualize model performance:
+### Step 2. Visualize Model Performance
 
 ```bash
-python model_visualization.py /path/to/model_accuracy_results --title "Model Performance"
+python model_visualization.py /PATH/TO/model_accuracy_results --save /PATH/TO/OUTPUT --title "Model Performance"
 ```
+### Example 
+```bash
+python model_visualization.py /projects/ttan/BEEST_hcp/SPN20_model/SPN20_model_LOO_results / 
+    --save /projects/ttan/BEEST_hcp/fix_classifier/SPN20_model_accuracy.png /
+    --title "SPN20 model performance"
+```
+> **💡 Note:** The `model_accuracy_results` file is automatically generated in your `MODEL_OUTPUT_DIR` after training completes
 
-**Note:** The `model_accuracy_results` file can be found in the `[MODEL_OUTPUT_DIR]` directory after training is complete.
+---
+
+## 📊 Output Files
+
+The training process generates:
+- ✅ **Trained FIX classifier model**
+- 📈 **Performance metrics and accuracy results**
+- 📋 **Training logs**
+- 📊 **Visualization plots** (TPR, TNR, and combined metrics)
