@@ -89,7 +89,7 @@ bash fix_classifier_performance \
 | `MODEL` | Path to the trained model |
 | `QX_CONTAINER` | Container specification for the execution environment |
 
-> **💡 Note:** The `model_accuracy_results` outputs are generated in [STUDY_DIR] by default.
+> **💡 Note:** The `model_accuracy_results` outputs are generated in **[STUDY_DIR]/[fix_model_metrics]** by default.
 
 ### Step 3: Visualize Model Performance
 
