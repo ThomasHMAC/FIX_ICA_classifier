@@ -1,6 +1,6 @@
 
 
-SESSIONS=${1:-}
+STUDY_DIR=${1:-}
 MODEL=${2:-}
 PARTICIPANT_FILE=${3:-}
 QX_CONTAINER=${4:-/scratch/smansour/qunex/1.0.4/qunex_suite_1.0.4.sif}
@@ -8,9 +8,9 @@ QX_CONTAINER=${4:-/scratch/smansour/qunex/1.0.4/qunex_suite_1.0.4.sif}
 RED='\033[0;31m'
 NC='\033[0m'
 
-if [[ -z "$SESSIONS" || -z "$MODEL" || -z "$PARTICIPANT_FILE" ]]; then
+if [[ -z "$STUDY_DIR" || -z "$MODEL" || -z "$PARTICIPANT_FILE" ]]; then
   echo -e "${RED}ERROR:${NC} Missing required arguments. Use --help for detail"
-  echo "Usage: $0 [SESSIONS] [MODEL] [PARTICIPANT_FILE] [QX_CONTAINER]"
+  echo "Usage: $0 [STUDY_DIR] [MODEL] [PARTICIPANT_FILE] [QX_CONTAINER]"
   exit 1
 fi
 
@@ -20,7 +20,7 @@ logfile="BEEST_fix_classifier_performance_${timestamp}.log"
 exec > >(tee -a "$logfile") 2>&1
 
 echo "🔧 Starting script at $(date)"
-echo "🔧 STUDY_DIR         : $SESSIONS"
+echo "🔧 STUDY_DIR         : $STUDY_DIR"
 echo "🔧 MODEL             : $MODEL"
 echo "🔧 PARTICIPANT_FILE  : $PARTICIPANT_FILE"
 echo "🔧 QX_CONTAINER      : $QX_CONTAINER"
@@ -44,7 +44,7 @@ is_participant_selected() {
 
 # Collect ICA dirs with labels ===
 mergefiles() {
-  local SESSIONS=$1
+  local STUDYFOLDER=$1
 
   echo "🔍 Collecting ICA directories for study: ${STUDY}"
   while read -r ica_dir; do
@@ -62,11 +62,11 @@ mergefiles() {
     else
       echo "⚠️  Missing label in: $ica_dir"
     fi
-  done < <(find "${SESSIONS}/" -type d -name "*_BOLD_*_PA_hp2000.ica")
+  done < <(find "${STUDYFOLDER}/sessions" -type d -name "*_BOLD_*_PA_hp2000.ica")
 }
 
-mergefiles ${SESSIONS}
-echo ${SESSIONS}
+mergefiles ${STUDY_DIR}
+
 echo "$subs_ica_dir" | tr ' ' '\n' | sort
 echo "Running fix -C..."
 model_name=$(basename $MODEL .RData)
