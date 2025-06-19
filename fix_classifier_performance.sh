@@ -71,15 +71,15 @@ echo "$subs_ica_dir" | tr ' ' '\n' | sort
 echo "Running fix -C..."
 model_name=$(basename $MODEL .RData)
 
-# singularity exec -B ${STUDY_DIR} -B ${MODEL} --env MODEL_NAME=${model_name} ${QX_CONTAINER} \
-#   bash -c '
-#     source /opt/qunex/env/qunex_environment.sh
-#     export FSL_FIX_MATLAB_MODE=2
+singularity exec -B ${STUDY_DIR} -B ${MODEL} --env MODEL_NAME=${model_name} ${QX_CONTAINER} \
+  bash -c '
+    source /opt/qunex/env/qunex_environment.sh
+    export FSL_FIX_MATLAB_MODE=2
 
-#     echo "Using bound model: $0"
-#     echo "Using bound study dir: $1"
-#     echo "Model name: $MODEL_NAME"
-#     echo "ICA dirs: ${@:2}"
-#     /opt/fsl/fix/fix -C "$0" "$1/${MODEL_NAME}_accuracy" "${@:2}"
-#     /opt/fsl/fix/fix -C /opt/fsl/fix/training_files/HCP_hp2000.RData "$1/HCP_hp2000_accuracy" "${@:2}"
-#   ' ${MODEL} ${STUDY_DIR} ${subs_ica_dir[@]}
+    echo "Using bound model: $0"
+    echo "Using bound study dir: $1"
+    echo "Model name: $MODEL_NAME"
+    echo "ICA dirs: ${@:2}"
+    /opt/fsl/fix/fix -C "$0" "$1/${MODEL_NAME}_accuracy" "${@:2}"
+    /opt/fsl/fix/fix -C /opt/fsl/fix/training_files/HCP_hp2000.RData "$1/HCP_hp2000_accuracy" "${@:2}"
+  ' ${MODEL} ${STUDY_DIR} ${subs_ica_dir[@]}
