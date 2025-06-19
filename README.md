@@ -44,14 +44,14 @@ The app allows you to:
 ### Step 1: Train Classifier
 
 ```bash
-bash train_fix_classifier.sh [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_OUTPUT_DIR] [STUDIES_ID] [QX_CONTAINER]
+bash 01_train_model.sh [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_OUTPUT_DIR] [STUDIES_ID] [QX_CONTAINER]
 ```
 
-Use `train_fix_classifier.sh --help` for more details.
+Use `01_train_model.sh --help` for more details.
 
 #### Example:
 ```bash
-bash train_fix_classifier.sh \
+bash 01_train_model.sh \
     /projects/ttan/BEEST_hcp \
     /projects/ttan/BEEST_hcp/selected_participants.txt \
     /projects/ttan/BEEST_hcp/SPN20_model \
@@ -70,12 +70,12 @@ bash train_fix_classifier.sh \
 ---
 ### Step 2: Compute accuracy test for models
 ```bash
-bash fix_classifier_performance [STUDY_DIR] [MODEL] [PARTICIPANT_FILE] [QX_CONTAINER]
+bash 02_evaluate_model [STUDY_DIR] [MODEL] [PARTICIPANT_FILE] [QX_CONTAINER]
 ```
 
 #### Example:
 ```bash
-bash fix_classifier_performance \
+bash 02_evaluate_model \
     /projects/ttan/BEEST_hcp/SPN40 \
     /projects/ttan/BEEST_hcp/SPN20_model/SPN20_model.RData \
     /projects/ttan/BEEST_hcp/SPN40/test_sublist.txt \
@@ -94,12 +94,12 @@ bash fix_classifier_performance \
 ### Step 3: Visualize Model Performance
 
 ```bash
-python model_visualization.py /PATH/TO/model_accuracy_results --save /PATH/TO/OUTPUT --title "Model Performance"
+python 04_visualize_metrics.py /PATH/TO/model_accuracy_results --save /PATH/TO/OUTPUT --title "Model Performance"
 ```
 
 #### Example:
 ```bash
-python model_visualization.py \
+python 04_visualize_metrics.py \
     /projects/ttan/BEEST_hcp/SPN20_model/SPN20_model_accuracy_results \
     --save /projects/ttan/BEEST_hcp/fix_classifier/SPN20_model_accuracy.png \
     --title "SPN20 Model Performance"

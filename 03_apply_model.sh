@@ -49,7 +49,7 @@ echo "🔧 REST_NUM           : $fmriname"
 echo "🔧 MODEL              : $MODEL"
 echo "============================================="
 
-#hcp_fix <4D_FMRI_data> <highpass> <do_motion_regression> [<TrainingFile>] [<FixThreshold>] [<DeleteIntermediates>
+# hcp_fix <4D_FMRI_data> <highpass> <do_motion_regression> [<TrainingFile>] [<FixThreshold>] [<DeleteIntermediates>
 /opt/HCP/HCPpipelines/ICAFIX/hcp_fix \
  ${mni_results} \
  2000 \
