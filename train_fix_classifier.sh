@@ -35,7 +35,7 @@ IFS=',' read -r -a STUDIES <<< "$STUDIES_ID"
 
 # === Logging Setup ===
 timestamp=$(date +"%Y%m%d_%H%M%S")
-logfile="BEEST_model_training_${timestamp}.log"
+logfile="BEEST_train_fix_classifier_${timestamp}.log"
 exec > >(tee -a "$logfile") 2>&1
 
 echo "🔧 Starting script at $(date)"
@@ -135,12 +135,10 @@ trainmodel() {
     source /opt/qunex/env/qunex_environment.sh
     export FSL_FIX_MATLAB_MODE=2
     /opt/fsl/fix/fix -t "$0/${MODEL_NAME}" -l "$@" &&
-    /opt/fsl/fix/fix -C /opt/fsl/fix/training_files/HCP_hp2000.RData "$0/HCP_hp2000_accuracy" "$@"
 
   ' "$MODEL_OUTPUT_DIR" ${subs_ica_dir}
 }
 
-# === Step 4: Compute
 # === Main Workflow ===
 for study in "${STUDIES[@]}"; do
   echo "🔄 Processing study: $study"
