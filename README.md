@@ -44,17 +44,17 @@ The app allows you to:
 ### Step 1: Train Classifier
 
 ```bash
-bash fix_classifier_model.sh [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_OUTPUT_DIR] [STUDIES_ID] [QX_CONTAINER]
+bash train_fix_classifier.sh [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_OUTPUT_DIR] [STUDIES_ID] [QX_CONTAINER]
 ```
 
-Use `fix_classifier_model.sh --help` for more details.
+Use `train_fix_classifier.sh --help` for more details.
 
 #### Example:
 ```bash
-bash fix_classifier_model.sh \
+bash train_fix_classifier.sh \
     /projects/ttan/BEEST_hcp \
     /projects/ttan/BEEST_hcp/selected_participants.txt \
-    /projects/ttan/BEEST_hcp/CMH_model \
+    /projects/ttan/BEEST_hcp/SPN20_model \
     'SPN20,SPN40'
 ```
 
@@ -68,8 +68,30 @@ bash fix_classifier_model.sh \
 | `QX_CONTAINER` | Container specification for the execution environment |
 
 ---
+### Step 2: Compute accuracy test for models
+```bash
+bash fix_classifier_performance [STUDY_DIR] [MODEL] [PARTICIPANT_FILE] [QX_CONTAINER]
+```
 
-### Step 2: Visualize Model Performance
+#### Example:
+```bash
+bash fix_classifier_performance \
+    /projects/ttan/BEEST_hcp/SPN40 \
+    /projects/ttan/BEEST_hcp/SPN20_model/SPN20_model.RData \
+    /projects/ttan/BEEST_hcp/SPN40/test_sublist.txt \
+```
+
+#### Parameters:
+| Parameter | Description |
+|-----------|-------------|
+| `STUDY_DIR` | Path to your HCP-style study data |
+| `PARTICIPANT_FILE` | Text file containing participants for training |
+| `MODEL` | Path to the trained model |
+| `QX_CONTAINER` | Container specification for the execution environment |
+
+> **💡 Note:** The `model_accuracy_results` outputs are generated in [STUDY_DIR] by default.
+
+### Step 3: Visualize Model Performance
 
 ```bash
 python model_visualization.py /PATH/TO/model_accuracy_results --save /PATH/TO/OUTPUT --title "Model Performance"
@@ -78,12 +100,10 @@ python model_visualization.py /PATH/TO/model_accuracy_results --save /PATH/TO/OU
 #### Example:
 ```bash
 python model_visualization.py \
-    /projects/ttan/BEEST_hcp/SPN20_model/SPN20_model_LOO_results \
+    /projects/ttan/BEEST_hcp/SPN20_model/SPN20_model_accuracy_results \
     --save /projects/ttan/BEEST_hcp/fix_classifier/SPN20_model_accuracy.png \
     --title "SPN20 Model Performance"
 ```
-
-> **💡 Note:** The `model_accuracy_results` file is automatically generated in your `MODEL_OUTPUT_DIR` after training completes.
 
 ---
 
