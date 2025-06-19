@@ -66,7 +66,8 @@ mergefiles() {
 }
 
 mergefiles ${STUDY_DIR}
-
+OUTDIR=${STUDY_DIR}/fix_model_metrics
+mkdir -vp ${OUTDIR}
 echo "$subs_ica_dir" | tr ' ' '\n' | sort
 echo "Running fix -C..."
 model_name=$(basename $MODEL .RData)
@@ -82,4 +83,4 @@ singularity exec -B ${STUDY_DIR} -B ${MODEL} --env MODEL_NAME=${model_name} ${QX
     echo "ICA dirs: ${@:2}"
     /opt/fsl/fix/fix -C "$0" "$1/${MODEL_NAME}_accuracy" "${@:2}"
     /opt/fsl/fix/fix -C /opt/fsl/fix/training_files/HCP_hp2000.RData "$1/HCP_hp2000_accuracy" "${@:2}"
-  ' ${MODEL} ${STUDY_DIR} ${subs_ica_dir[@]}
+  ' ${MODEL} ${OUTDIR} ${subs_ica_dir[@]}
