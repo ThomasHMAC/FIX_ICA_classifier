@@ -61,7 +61,7 @@ bash train_fix_classifier.sh \
 #### Parameters:
 | Parameter | Description |
 |-----------|-------------|
-| `ROOT_DIR` | Root directory containing your HCP-style study data |
+| `ROOT_DIR` | Root directory containing your HCP-style study |
 | `PARTICIPANT_FILE` | Text file containing participants for training |
 | `MODEL_OUTPUT_DIR` | Directory where the trained model will be saved |
 | `STUDIES_ID` | Comma-separated list of studies or a single study |
@@ -84,7 +84,7 @@ bash fix_classifier_performance \
 #### Parameters:
 | Parameter | Description |
 |-----------|-------------|
-| `STUDY_DIR` | Path to your HCP-style study data |
+| `STUDY_DIR` | Path to your HCP-style study directory |
 | `PARTICIPANT_FILE` | Text file containing participants for training |
 | `MODEL` | Path to the trained model |
 | `QX_CONTAINER` | Container specification for the execution environment |

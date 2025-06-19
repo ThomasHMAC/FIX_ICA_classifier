@@ -62,7 +62,7 @@ mergefiles() {
     else
       echo "⚠️  Missing label in: $ica_dir"
     fi
-  done < <(find "${STUDYFOLDER}/sessions_bkup_ica/sessions" -type d -name "*_BOLD_*_PA_hp2000.ica")
+  done < <(find "${STUDYFOLDER}/sessions" -type d -name "*_BOLD_*_PA_hp2000.ica")
 }
 
 mergefiles ${STUDY_DIR}
