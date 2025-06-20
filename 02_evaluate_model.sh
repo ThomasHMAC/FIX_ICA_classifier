@@ -16,7 +16,7 @@ fi
 
 # === Logging Setup ===
 timestamp=$(date +"%Y%m%d_%H%M%S")
-logfile="BEEST_fix_classifier_performance_${timestamp}.log"
+logfile="02_evaluate_model_${timestamp}.log"
 exec > >(tee -a "$logfile") 2>&1
 
 echo "🔧 Starting script at $(date)"
@@ -68,7 +68,7 @@ mergefiles() {
 mergefiles ${STUDY_DIR}
 OUTDIR=${STUDY_DIR}/fix_model_metrics
 mkdir -vp ${OUTDIR}
-echo "$subs_ica_dir" | tr ' ' '\n' | sort
+subs_ica_dir=$(echo "$subs_ica_dir" | tr ' ' '\n' | sort)
 echo "Running fix -C..."
 model_name=$(basename $MODEL .RData)
 
