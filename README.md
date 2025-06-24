@@ -87,8 +87,8 @@ bash 02_evaluate_model.sh [STUDY_DIR] [MODEL] [PARTICIPANT_FILE] [QX_CONTAINER]
 ```bash
 bash 02_evaluate_model.sh \
     /projects/ttan/BEEST_hcp/SPN40 \
-    /projects/ttan/BEEST_hcp/SPN20_model/SPN20_model.RData \
-    /projects/ttan/BEEST_hcp/SPN40/test_sublist.txt
+    /projects/ttan/BEEST_hcp/MODSOCCS_model/MODSOCCS_model.pyfix_model \
+    /projects/ttan/BEEST_hcp/SPN20/test_sublist.txt
 ```
 
 #### Parameters:
