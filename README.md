@@ -110,7 +110,7 @@ bash 02_evaluate_model.sh \
 Generate performance plots using the results from Step 2. The visualization script reads the accuracy metrics file created during model evaluation:
 
 ```bash
-python 04_visualize_metrics.py /PATH/TO/RESULTS_FILE --save /PATH/TO/OUTPUT --title "Model Performance"
+python 03_visualize_metrics.py /PATH/TO/RESULTS_FILE --save /PATH/TO/OUTPUT --title "Model Performance"
 ```
 
 **Finding your results file:** After Step 2, look in `[STUDY_DIR]/fix_model_metrics/` for a file with pattern:
@@ -120,7 +120,7 @@ python 04_visualize_metrics.py /PATH/TO/RESULTS_FILE --save /PATH/TO/OUTPUT --ti
 #### Example:
 ```bash
 # Using results from Step 2 evaluation
-python 04_visualize_metrics.py \
+python 03_visualize_metrics.py \
     /projects/ttan/BEEST_hcp/SPN40/fix_model_metrics/MODSOCCS_model_accuracy_20250624_172033_pyfix_model \
     --save /projects/ttan/BEEST_hcp/MODSOCCS_performance.png \
     --title "MODSOCCS Model Performance"
@@ -132,6 +132,37 @@ python 04_visualize_metrics.py \
 | `metrics_path` | Full path to the accuracy results file |
 | `--save` | Output path for the visualization plot |
 | `--title` | Title for the performance plot |
+
+---
+
+### Step 4: Apply Model to New Data
+
+Once you have a trained and validated model, you can apply it to classify ICA components in new datasets:
+
+```bash
+sbatch 04_apply_model_slurm.sh
+```
+
+**Before running, edit the script variables:**
+```bash
+# Required variables to set in 04_apply_model_slurm.sh
+qx_container=/path/to/your/qunex_container.sif
+STUDYFOLDER=/path/to/your/study/directory
+sublist=/path/to/your/participant/list.txt
+MODEL=/path/to/your/trained/model.pyfix_model
+```
+
+#### Parameters:
+| Variable | Description |
+|----------|-------------|
+| `qx_container` | Path to your QuNex Singularity container |
+| `STUDYFOLDER` | Main study directory containing your data |
+| `sublist` | Text file listing participants to process (one per line) |
+| `MODEL` | Path to your trained model file (from Step 1) |
+
+> **💡 Note:** This step processes BOLD data for each participant and applies your trained FIX classifier to automatically identify and classify ICA components as signal or noise.
+
+```
 
 ---
 
