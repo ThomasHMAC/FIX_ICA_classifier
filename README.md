@@ -59,7 +59,7 @@ bash 01_train_model.sh \
     /projects/ttan/BEEST_hcp \
     /projects/ttan/BEEST_hcp/selected_participants.txt \
     'pyfix_model' \
-    /projects/ttan/BEEST_hcp/MODSOCCS_MODEL \
+    /projects/ttan/BEEST_hcp/MODSOCCS_model \
     'SPN20,SPN40'
 ```
 
