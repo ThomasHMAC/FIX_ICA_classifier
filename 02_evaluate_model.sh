@@ -1,4 +1,6 @@
-
+#! /bin/bash
+# === Usage ===
+# 02_evaluate_model.sh [STUDY_DIR] [MODEL] [PARTICIPANT_FILE]
 
 STUDY_DIR=${1:-}
 MODEL=${2:-}
@@ -15,9 +17,14 @@ if [[ -z "$STUDY_DIR" || -z "$MODEL" || -z "$PARTICIPANT_FILE" ]]; then
 fi
 
 # === Logging Setup ===
+OUTDIR=${STUDY_DIR}/fix_model_metrics
+model_name=$(basename $MODEL)
+extension="${model_name##*.}"
+model_name="${model_name%.*}"
 timestamp=$(date +"%Y%m%d_%H%M%S")
-logfile="02_evaluate_model_${timestamp}.log"
-exec > >(tee -a "$logfile") 2>&1
+# logfile=${OUTDIR}/${model_name}_accuracy_${timestamp}_${extension}
+
+# exec > >(tee -a "$logfile") 2>&1
 
 echo "🔧 Starting script at $(date)"
 echo "🔧 STUDY_DIR         : $STUDY_DIR"
@@ -45,8 +52,8 @@ is_participant_selected() {
 # Collect ICA dirs with labels ===
 mergefiles() {
   local STUDYFOLDER=$1
-
-  echo "🔍 Collecting ICA directories for study: ${STUDY}"
+  local sessions_folder=${STUDY_DIR}/sessions
+  echo "🔍 Collecting ICA directories"
   while read -r ica_dir; do
     subid=$(echo "$ica_dir" | grep -oP 'sessions/\K[^/]+' | head -1)
 
@@ -62,25 +69,43 @@ mergefiles() {
     else
       echo "⚠️  Missing label in: $ica_dir"
     fi
-  done < <(find "${STUDYFOLDER}/sessions" -type d -name "*_BOLD_*_PA_hp2000.ica")
+  done < <(find "${sessions_folder}" -type d -name "*_BOLD_*_PA_hp2000.ica")
 }
 
 mergefiles ${STUDY_DIR}
-OUTDIR=${STUDY_DIR}/fix_model_metrics
 mkdir -vp ${OUTDIR}
 subs_ica_dir=$(echo "$subs_ica_dir" | tr ' ' '\n' | sort)
-echo "Running fix -C..."
-model_name=$(basename $MODEL .RData)
 
-singularity exec -B ${STUDY_DIR} -B ${MODEL} --env MODEL_NAME=${model_name} ${QX_CONTAINER} \
-  bash -c '
-    source /opt/qunex/env/qunex_environment.sh
-    export FSL_FIX_MATLAB_MODE=2
+if [[ $extension == "pyfix_model" ]]; then
+    logfile=${OUTDIR}/${model_name}_accuracy_${timestamp}_${extension}
+    exec > >(tee -a "$logfile") 2>&1
+    singularity exec -B ${STUDY_DIR} -B ${MODEL} --env MODEL_NAME=${model_name} ${QX_CONTAINER} \
+      bash -c '
+        source /opt/qunex/env/qunex_environment.sh
+        export FSL_FIX_MATLAB_MODE=2
 
-    echo "Using bound model: $0"
-    echo "Using bound study dir: $1"
-    echo "Model name: $MODEL_NAME"
-    echo "ICA dirs: ${@:2}"
-    /opt/fsl/fix/fix -C "$0" "$1/${MODEL_NAME}_accuracy" "${@:2}"
-    /opt/fsl/fix/fix -C /opt/fsl/fix/training_files/HCP_hp2000.RData "$1/HCP_hp2000_accuracy" "${@:2}"
-  ' ${MODEL} ${OUTDIR} ${subs_ica_dir[@]}
+        echo "Input model: $0"
+        echo "Input study dir: $1"
+        echo "Model name: $MODEL_NAME"
+        echo "ICA dirs: ${@:2}"
+        echo /opt/fsl/fsl-6.0.7.14/bin/fix -C "$0" "$1/${MODEL_NAME}_accuracy" "${@:2}"
+        # /opt/fsl/fsl-6.0.7.14/bin/fix -c "${@:2}" "$0" 10
+        /opt/fsl/fsl-6.0.7.14/bin/fix -C -lf "$1"/pyfix_$(date +"%Y%m%d_%H%M%S").log "$0" "${@:2}"
+      ' ${MODEL} ${OUTDIR} ${subs_ica_dir[@]}
+elif [[ $extension == "RData" ]]; then
+    singularity exec -B ${STUDY_DIR} -B ${MODEL} --env MODEL_NAME=${model_name} --env MODEL_EXT=${extension} ${QX_CONTAINER} \
+      bash -c '
+        source /opt/qunex/env/qunex_environment.sh
+        export FSL_FIX_MATLAB_MODE=2
+
+        echo "Input model: $0"
+        echo "Input study dir: $1"
+        echo "Model name: $MODEL_NAME"
+        echo "ICA dirs: ${@:2}"
+        echo /opt/fsl/fix/fix -C "$0" "$1/${MODEL_NAME}_accuracy_$(date +"%Y%m%d_%H%M%S")_${extension}" "${@:2}"
+        /opt/fsl/fix/fix -C "$0" "$1/${MODEL_NAME}_accuracy_$(date +"%Y%m%d_%H%M%S")_${MODEL_EXT}" "${@:2}"
+        # /opt/fsl/fix/fix -C /opt/fsl/fix/training_files/HCP_hp2000.RData "$1/HCP_hp2000_accuracy" "${@:2}"
+      ' ${MODEL} ${OUTDIR} ${subs_ica_dir[@]}
+else
+    echo "Model extension is not recognized!!!"
+fi
