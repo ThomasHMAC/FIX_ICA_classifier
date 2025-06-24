@@ -1,6 +1,6 @@
 # FIX Classifier Training and Visualization Module
 
-This module is designed to train a classifier for Independent Component Analysis (ICA) component classification using FSL's FIX tool. It includes utilities to train new FIX models on HCP-style datasets and visualize model performance.
+This module trains a classifier for Independent Component Analysis (ICA) component classification using FSL's FIX tool. It includes utilities to train new FIX models on HCP-style datasets and visualize model performance.
 
 ---
 
@@ -17,6 +17,8 @@ This module is designed to train a classifier for Independent Component Analysis
 
 ### Required Directory Structure
 
+Your study directory should follow this structure:
+
 ```
 /projects/ttan/BEEST_hcp/SPN20/
 ├── ica_correct/
@@ -28,9 +30,9 @@ This module is designed to train a classifier for Independent Component Analysis
 └── sessions/
 ```
 
-### 🏷️ Hand-Labeled ICA Components
+### 🏷️ Creating Hand-Labeled ICA Components
 
-Hand-labeled ICA component files can be created using **our interactive ICA labeling app** [available here](https://github.com/slimnsour/ica-ranker).
+Before training your classifier, you need hand-labeled ICA component files. These can be created using **our interactive ICA labeling app** [available here](https://github.com/slimnsour/ica-ranker).
 
 The app allows you to:
 - Visually inspect ICA components
@@ -39,22 +41,25 @@ The app allows you to:
 
 ---
 
-## 📖 Usage
+## 📖 Step-by-Step Usage
 
-### Step 1: Train Classifier
+### Step 1: Train Your Classifier
+
+Train a new FIX classifier using your hand-labeled data:
 
 ```bash
-bash 01_train_model.sh [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_OUTPUT_DIR] [STUDIES_ID] [QX_CONTAINER]
+bash 01_train_model.sh [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_TYPE] [MODEL_OUTPUT_DIR] [STUDIES_ID] [QX_CONTAINER]
 ```
 
-Use `01_train_model.sh --help` for more details.
+Use `01_train_model.sh --help` for detailed parameter information.
 
 #### Example:
 ```bash
 bash 01_train_model.sh \
     /projects/ttan/BEEST_hcp \
     /projects/ttan/BEEST_hcp/selected_participants.txt \
-    /projects/ttan/BEEST_hcp/SPN20_model \
+    'pyfix_model' \
+    /projects/ttan/BEEST_hcp/MODSOCCS_MODEL \
     'SPN20,SPN40'
 ```
 
@@ -62,55 +67,85 @@ bash 01_train_model.sh \
 | Parameter | Description |
 |-----------|-------------|
 | `ROOT_DIR` | Root directory containing your HCP-style study |
-| `PARTICIPANT_FILE` | Text file containing participants for training |
+| `PARTICIPANT_FILE` | Text file listing participants for training (one per line) |
+| `MODEL_TYPE` | Model format: `pyfix_model` or `RData` |
 | `MODEL_OUTPUT_DIR` | Directory where the trained model will be saved |
-| `STUDIES_ID` | Comma-separated list of studies or a single study |
+| `STUDIES_ID` | Comma-separated list of study IDs (e.g., 'SPN20,SPN40') |
 | `QX_CONTAINER` | Container specification for the execution environment |
 
 ---
-### Step 2: Compute accuracy test for models
+
+### Step 2: Evaluate Model Performance
+
+Test your trained model on a separate dataset to assess its accuracy:
+
 ```bash
-bash 02_evaluate_model [STUDY_DIR] [MODEL] [PARTICIPANT_FILE] [QX_CONTAINER]
+bash 02_evaluate_model.sh [STUDY_DIR] [MODEL] [PARTICIPANT_FILE] [QX_CONTAINER]
 ```
 
 #### Example:
 ```bash
-bash 02_evaluate_model \
+bash 02_evaluate_model.sh \
     /projects/ttan/BEEST_hcp/SPN40 \
     /projects/ttan/BEEST_hcp/SPN20_model/SPN20_model.RData \
-    /projects/ttan/BEEST_hcp/SPN40/test_sublist.txt \
+    /projects/ttan/BEEST_hcp/SPN40/test_sublist.txt
 ```
 
 #### Parameters:
 | Parameter | Description |
 |-----------|-------------|
-| `STUDY_DIR` | Path to your HCP-style study directory |
-| `PARTICIPANT_FILE` | Text file containing participants for training |
-| `MODEL` | Path to the trained model |
+| `STUDY_DIR` | Path to your HCP-style study directory for testing |
+| `MODEL` | Path to your trained model file |
+| `PARTICIPANT_FILE` | Text file listing participants for testing (one per line) |
 | `QX_CONTAINER` | Container specification for the execution environment |
 
-> **💡 Note:** The `model_accuracy_results` outputs are generated in **[STUDY_DIR]/[fix_model_metrics]** by default.
+> **💡 Note:** Performance results are saved in **[STUDY_DIR]/fix_model_metrics**. File naming depends on model type:
+> - `pyfix_model`: Files include a "pyfix_model" suffix
+> - `RData`: Files include an "RData_results" suffix
+
+---
 
 ### Step 3: Visualize Model Performance
 
+Generate performance plots using the results from Step 2. The visualization script reads the accuracy metrics file created during model evaluation:
+
 ```bash
-python 04_visualize_metrics.py /PATH/TO/model_accuracy_results --save /PATH/TO/OUTPUT --title "Model Performance"
+python 04_visualize_metrics.py /PATH/TO/RESULTS_FILE --save /PATH/TO/OUTPUT --title "Model Performance"
 ```
+
+**Finding your results file:** After Step 2, look in `[STUDY_DIR]/fix_model_metrics/` for a file with pattern:
+- `*_accuracy_*_pyfix_model` (for pyfix_model type)
+- `*_accuracy_*_RData_results` (for RData type)
 
 #### Example:
 ```bash
+# Using results from Step 2 evaluation
 python 04_visualize_metrics.py \
-    /projects/ttan/BEEST_hcp/SPN20_model/SPN20_model_accuracy_results \
-    --save /projects/ttan/BEEST_hcp/fix_classifier/SPN20_model_accuracy.png \
-    --title "SPN20 Model Performance"
+    /projects/ttan/BEEST_hcp/SPN40/fix_model_metrics/MODSOCCS_model_accuracy_20250624_172033_pyfix_model \
+    --save /projects/ttan/BEEST_hcp/MODSOCCS_performance.png \
+    --title "MODSOCCS Model Performance"
 ```
+
+#### Parameters:
+| Parameter | Description |
+|-----------|-------------|
+| `metrics_path` | Full path to the accuracy results file |
+| `--save` | Output path for the visualization plot |
+| `--title` | Title for the performance plot |
 
 ---
 
 ## 📊 Output Files
 
-The training process generates:
-- ✅ **Trained FIX classifier model**
-- 📈 **Performance metrics and accuracy results**
-- 📋 **Training logs**
-- 📊 **Visualization plots** (TPR, TNR, and combined metrics)
+After completing all steps, you'll have:
+
+**From Training (Step 1):**
+- ✅ **Trained FIX classifier model** (`.RData` or `pyfix_model` format)
+- 📋 **Training logs and configuration files**
+
+**From Evaluation (Step 2):**
+- 📈 **Performance metrics file** with accuracy statistics
+- 📊 **Detailed classification results** (TPR, TNR, specificity, sensitivity)
+
+**From Visualization (Step 3):**
+- 📊 **Performance plots** showing model accuracy metrics
