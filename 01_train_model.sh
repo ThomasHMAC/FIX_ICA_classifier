@@ -1,41 +1,56 @@
-#! /bin/bash
+#!/bin/bash
 
-# === Usage ===
-# ./fix_classifier_model.sh [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_OUTPUT_DIR] [QX_CONTAINER]
+# ----------- Argument Parsing ------------
+ROOT_DIR="${1:-}"
+PARTICIPANT_FILE="${2:-}"
+MODEL_TYPE="${3:-}"
+MODEL_OUTPUT_DIR="${4:-}"
+STUDIES_ID="${5:-}"
+QX_CONTAINER="${6:-/scratch/smansour/qunex/1.0.4/qunex_suite_1.0.4.sif}"
 
-ROOT_DIR=${1:-}
-PARTICIPANT_FILE=${2:-}
-MODEL_OUTPUT_DIR=${3:-}
-STUDIES_ID=${4:-}
-QX_CONTAINER=${5:-/scratch/smansour/qunex/1.0.4/qunex_suite_1.0.4.sif}
-
+# ----------- Color codes ------------
 RED='\033[0;31m'
-NC='\033[0m'
+NC='\033[0m' # No Color
 
+# ----------- Help Message ------------
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-  echo "Usage: $0 [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_OUTPUT_DIR] [STUDIES_CSV] [QX_CONTAINER]"
+  echo "Usage: $0 [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_TYPE] [MODEL_OUTPUT_DIR] [STUDIES_ID] [QX_CONTAINER]"
   echo ""
   echo "Arguments:"
-  echo "  ROOT_DIR           Path to project root where studies are (required) (i.e /projects/ttan/BEEST_hcp)"
-  echo "  PARTICIPANT_FILE   Path to participant .txt file (required) (i.e \$ROOT_DIR/selected_participants.txt)"
-  echo "  MODEL_OUTPUT_DIR   Path to output model directory (required) (i.e \$ROOT_DIR/STUDY_model)"
-  echo "  STUDIES_ID         Comma-separated list of studies (required) (i.e 'SPN20,SPN40')"
-  echo "  QX_CONTAINER       Path to qunex Singularity container (optional, default: /scratch/smansour/qunex/1.0.4/qunex_suite_1.0.4.sif)"
+  echo "  ROOT_DIR           Path to project root where studies are (required)."
+  echo "                     e.g., /projects/ttan/BEEST_hcp"
+  echo "  PARTICIPANT_FILE   Path to participant .txt file used to train model (required)."
+  echo "                     e.g., \$ROOT_DIR/selected_participants.txt"
+  echo "  MODEL_TYPE         Type of the training model: 'pyfix_model' or 'RData' (required)"
+  echo "  MODEL_OUTPUT_DIR   Path to output model directory (required)."
+  echo "                     e.g., \$ROOT_DIR/STUDY_model"
+  echo "  STUDIES_ID         Comma-separated list of studies (required)."
+  echo "                     e.g., 'SPN20,SPN40' or 'SPN20'"
+  echo "  QX_CONTAINER       Path to Qunex Singularity container (optional)."
+  echo "                     Default: /scratch/smansour/qunex/1.0.4/qunex_suite_1.0.4.sif"
   exit 0
 fi
 
-if [[ -z "$ROOT_DIR" || -z "$PARTICIPANT_FILE" || -z "$MODEL_OUTPUT_DIR" || -z "$STUDIES_ID" ]]; then
-  echo -e "${RED}ERROR:${NC} Missing required arguments. Use --help for detail"
-  echo "Usage: $0 [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_OUTPUT_DIR] [STUDIES_CSV] [QX_CONTAINER]"
+# ----------- Validate Required Arguments ------------
+if [[ -z "$ROOT_DIR" || -z "$PARTICIPANT_FILE" || -z "$MODEL_TYPE" || -z "$MODEL_OUTPUT_DIR" || -z "$STUDIES_ID" ]]; then
+  echo -e "${RED}❌ ERROR:${NC} Missing required arguments. Use --help for details."
+  echo "Usage: $0 [ROOT_DIR] [PARTICIPANT_FILE] [MODEL_TYPE] [MODEL_OUTPUT_DIR] [STUDIES_ID] [QX_CONTAINER]"
   exit 1
 fi
+
+# ----------- Validate MODEL_TYPE ------------
+if [[ "$MODEL_TYPE" != "pyfix_model" && "$MODEL_TYPE" != "RData" ]]; then
+  echo -e "${RED}❌ ERROR:${NC} MODEL_TYPE must be either 'pyfix_model' or 'RData'. Got: '$MODEL_TYPE'"
+  exit 1
+fi
+
 
 # Convert to array by splitting on comma
 IFS=',' read -r -a STUDIES <<< "$STUDIES_ID"
 
 # === Logging Setup ===
 timestamp=$(date +"%Y%m%d_%H%M%S")
-logfile="BEEST_train_fix_classifier_${timestamp}.log"
+logfile="01_train_model_${timestamp}.log"
 exec > >(tee -a "$logfile") 2>&1
 
 echo "🔧 Starting script at $(date)"
@@ -43,7 +58,7 @@ echo "🔧 ROOT_DIR          : $ROOT_DIR"
 echo "🔧 PARTICIPANT_FILE  : $PARTICIPANT_FILE"
 echo "🔧 MODEL_OUTPUT_DIR  : $MODEL_OUTPUT_DIR"
 echo "🔧 QX_CONTAINER      : $QX_CONTAINER"
-echo "🔧 Logging to: $logfile"
+echo "🔧 Logging to        : $logfile"
 echo "============================================="
 
 # === Global Variables ===
@@ -118,25 +133,42 @@ trainmodel() {
     return 1
   fi
 
-  mkdir -p "${MODEL_OUTPUT_DIR}"
   model_name=$(basename $MODEL_OUTPUT_DIR)
   echo "🧠 Training FIX model with ICA dirs:"
-  echo "$subs_ica_dir" | tr ' ' '\n' | sort
+  subs_ica_dir=$(echo "$subs_ica_dir" | tr ' ' '\n' | sort)
   echo "Launching Qunex Singularity Container..."
-  echo singularity exec -B "$ROOT_DIR" -B "$MODEL_OUTPUT_DIR" --env MODEL_NAME="$model_name" "$QX_CONTAINER" \
-  bash -c '
-    source /opt/qunex/env/qunex_environment.sh
-    export FSL_FIX_MATLAB_MODE=2
-    /opt/fsl/fix/fix -t "$0"/ -l "$@"
-  ' "$MODEL_OUTPUT_DIR" ${subs_ica_dir}
+  if [ $MODEL_TYPE = "pyfix_model" ]; then
+    mkdir -p "${MODEL_OUTPUT_DIR}_${MODEL_TYPE}"
+    echo singularity exec -B "$ROOT_DIR" -B "$MODEL_OUTPUT_DIR" --env MODEL_NAME="$model_name" "$QX_CONTAINER" \
+    bash -c '
+      source /opt/qunex/env/qunex_environment.sh
+      export FSL_FIX_MATLAB_MODE=2
+      /opt/fsl/fsl-6.0.7.14/bin/fix -t "$0/${MODEL_NAME}" -l "$@"
+    ' "$MODEL_OUTPUT_DIR" ${subs_ica_dir}
 
-  singularity exec -B "$ROOT_DIR" -B "$MODEL_OUTPUT_DIR" --env MODEL_NAME="$model_name" "$QX_CONTAINER" \
-  bash -c '
-    source /opt/qunex/env/qunex_environment.sh
-    export FSL_FIX_MATLAB_MODE=2
-    /opt/fsl/fix/fix -t "$0/${MODEL_NAME}" -l "$@" &&
+    singularity exec -B "$ROOT_DIR" -B "$MODEL_OUTPUT_DIR" --env MODEL_NAME="$model_name" "$QX_CONTAINER" \
+    bash -c '
+      source /opt/qunex/env/qunex_environment.sh
+      export FSL_FIX_MATLAB_MODE=2
+      /opt/fsl/fsl-6.0.7.14/bin/fix -t "$0/${MODEL_NAME}" -l "$@"
+    ' "$MODEL_OUTPUT_DIR" ${subs_ica_dir}
 
-  ' "$MODEL_OUTPUT_DIR" ${subs_ica_dir}
+  elif [ $MODEL_TYPE = "RData" ]; then
+    mkdir -p "${MODEL_OUTPUT_DIR}_${MODEL_TYPE}"
+    echo singularity exec -B "$ROOT_DIR" -B "$MODEL_OUTPUT_DIR" --env MODEL_NAME="$model_name" "$QX_CONTAINER" \
+    bash -c '
+      source /opt/qunex/env/qunex_environment.sh
+      export FSL_FIX_MATLAB_MODE=2
+      /opt/fsl/fix/fix -t "$0"/ -l "$@"
+    ' "$MODEL_OUTPUT_DIR" ${subs_ica_dir}
+
+    singularity exec -B "$ROOT_DIR" -B "$MODEL_OUTPUT_DIR" --env MODEL_NAME="$model_name" "$QX_CONTAINER" \
+    bash -c '
+      source /opt/qunex/env/qunex_environment.sh
+      export FSL_FIX_MATLAB_MODE=2
+      /opt/fsl/fix/fix -t "$0/${MODEL_NAME}" -l "$@"
+    ' "$MODEL_OUTPUT_DIR" ${subs_ica_dir}
+  fi
 }
 
 # === Main Workflow ===
